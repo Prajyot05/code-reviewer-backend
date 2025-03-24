@@ -1,3 +1,4 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Request, Response } from "express";
 
 const dummyJobs = [
@@ -210,18 +211,73 @@ const dummyQuestions = [
   },
 ];
 
-export const getJobs = (req: Request, res: Response) => {
+export const getJobs = async (req: Request, res: Response) => {
   res.json({
     success: true,
     jobs: dummyJobs,
   });
 };
 
-export const getQuestion = (req: Request, res: Response) => {
+export const getQuestion = async (req: Request, res: Response) => {
   const { id } = req.params;
   const question = dummyQuestions.find((j) => j.id === id);
   res.json({
     success: true,
     question,
   });
+};
+
+export const getRandomQuestion = async (req: Request, res: Response) => {
+  try {
+    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY!);
+
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash",
+      systemInstruction: `
+      You are an assistant that generates coding problems for software development practice. The problems should be relevant to data structures and algorithms (DSA) or logical coding challenges. Ensure the difficulty level is between beginner and intermediate. The output should always be a valid JSON array containing objects with the following structure:
+  
+      - name: A brief title for the coding challenge (e.g., "Reverse a string").
+      - question: A description of the coding problem, clear and concise, with examples if necessary (e.g., "Write a function to reverse a string.").
+  
+      Make sure to provide problems that can be solved using basic programming concepts and typical data structures like arrays, strings, linked lists, etc., and avoid overly complex or advanced topics. Focus on problems that involve essential algorithmic thinking and logical reasoning, with a difficulty level suitable for someone starting to build their problem-solving skills in coding.
+  
+      Example:
+      [
+        {
+          "name": "Reverse a string",
+          "question": "Write a function to reverse a string."
+        },
+        {
+          "name": "Sum of two numbers",
+          "question": "Write a function to find the sum of two numbers."
+        }
+      ]
+      
+      The problems should be simple to understand but require logical thinking to solve. Avoid any ambiguous instructions or unclear problem statements. The output should be well-structured in JSON format as described above.
+      `,
+    });
+
+    const result = await model.generateContent(`Create a new random question`);
+
+    // Remove backticks and sanitize the response
+    const sanitizedText = result.response
+      .text()
+      .replace(/```json|```/g, "")
+      .trim();
+
+    const parsedResponse = JSON.parse(sanitizedText);
+
+    const { name, question } = parsedResponse[0];
+
+    res.status(200).json({
+      success: true,
+      name,
+      question,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: `Error Fetching random Question: ${error}`,
+    });
+  }
 };
