@@ -52,9 +52,10 @@ export const getAllSubmissions = async (req: Request, res: Response) => {
       .select("questionName question createdAt")
       .exec();
 
-    const totalSubmissions = await Submission.countDocuments({
-      user: req.user.userId,
-    });
+    const user = await User.findById(req.user.userId);
+
+    const totalSubmissions = user?.submissions.length || 0;
+
     const totalPages = Math.ceil(totalSubmissions / limit);
 
     res.status(200).json({
