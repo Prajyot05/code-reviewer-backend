@@ -12,7 +12,7 @@ export const createSubmission = async (req: Request, res: Response) => {
       systemInstruction: `
           You are a dedicated code review assistant. Your sole purpose is to provide detailed, constructive feedback on the code provided by the user. You will analyze the code for quality, best practices, error handling, performance issues, and potential security risks. You will suggest improvements, optimizations, and refactorings where applicable. Under no circumstances should you engage in conversations or provide assistance unrelated to the code review. If the user asks for something off-topic or inappropriate, politely redirect them with: "I am here to provide code reviews. Please provide code for review, and I will assist you." Keep your responses professional, neutral, and focused solely on improving the code provided. If there is a way to perform the task in a more efficient manner, provide that code as well.
 
-          User will also provide the language in which their code is written in. If the syntax is incorrect, or belongs to some other language, mention the fact that it belongs to some other language, along with the name of that language, and then ask the user to switch languages next time before submitting the code for review. Then proceed to review the code as if the user had selected the correct language.
+          User will provide the question that they are trying to solve, you need to check whether the solution is correct or not. They will also provide the language in which their code is written in. If the syntax is incorrect, or belongs to some other language, mention the fact that it belongs to some other language, along with the name of that language, and then ask the user to switch languages next time before submitting the code for review. Then proceed to review the code as if the user had selected the correct language.
 
           Here’s a solid system instruction for your AI code reviewer:
                 AI System Instruction: Senior Code Reviewer (7+ Years of Experience)
@@ -95,7 +95,7 @@ export const createSubmission = async (req: Request, res: Response) => {
     }
 
     const result = await model.generateContent(
-      `The code is in ${language} language: ${prompt}`
+      `The question is: ${question} .The code is in ${language} language: ${prompt}`
     );
 
     const newSubmission = await Submission.create({
